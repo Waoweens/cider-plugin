@@ -1,8 +1,8 @@
-identifier: sh.cider.plugin-template-wip
-name: Example Plugin
-description: Shows off some of the working plugin API draft
-author: ciderapp
-repo: https://github.com/ciderapp/plugin-template-wip
+identifier: id.my.wao.cider-plugin
+name: Waoweens' Cider Plugin
+description: some personal changes to Cider
+author: Waoweens
+repo: https://github.com/Waoweens/cider-plugin
 entry:
   "plugin.js":
     type: main

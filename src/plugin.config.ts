@@ -2,12 +2,12 @@ import { createId } from "@paralleldrive/cuid2"
 
 export default {
     ce_prefix: createId(),
-    identifier: 'sh.cider.plugin-template-wip',
-    name: 'Cider Plugin Template (WIP)',
-    description: 'A template for creating a Cider plugin.',
+    identifier: 'id.my.wao.cider-plugin',
+    name: 'Waoweens\' Cider Plugin',
+    description: 'some personal changes to Cider',
     version: '0.0.1',
-    author: 'ciderapp',
-    repo: 'https://github.com/ciderapp/plugin-template-wip',
+    author: 'Waoweens',
+    repo: 'https://github.com/Waoweens/cider-plugin',
     entry: {
         'plugin.js': {
             type: 'main',
