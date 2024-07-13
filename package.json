@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
+    "@types/musickit-js": "^1.0.9",
     "lodash": "^4.17.21",
     "vue": "^3.4.29"
   },
