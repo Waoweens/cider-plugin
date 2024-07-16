@@ -5,9 +5,8 @@
 import { setupConfig } from "./api/Config";
 
 export const cfg = setupConfig({
-    favoriteColor: <'red' | 'green' | 'blue'>'blue',
-    count: <number>0,
-    booleanOption: <boolean>false,
+    endpoint: <string>'',
+	websockets: <boolean>true
 });
 
 export function useConfig() {
