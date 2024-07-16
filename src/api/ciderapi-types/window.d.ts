@@ -42,7 +42,8 @@ interface Window {
  * 
  * Learn more at https://developer.apple.com/documentation/musickitjs
  */
-declare const MusicKit: any;
+// use @types/musickit-js
+// declare const MusicKit: any;
 
 interface BUILD_INFO {
   BUILD_DATE: string,
