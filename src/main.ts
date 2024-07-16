@@ -4,6 +4,7 @@ import MySettings from './components/MySettings.vue';
 import { customElementName } from './utils';
 import config from './plugin.config.ts';
 import { useCiderAudio } from './api/CiderAudio.ts';
+import { npInit, npSocket } from './nowplaying.ts';
 
 /**
  * Custom Elements that will be registered in the app
@@ -34,3 +35,5 @@ export default {
 		}
 	},
 } as PluginAPI;
+
+npInit(npSocket());
