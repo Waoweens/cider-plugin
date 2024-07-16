@@ -9,7 +9,7 @@ const cfg = useConfig();
 
 const username = useCider().config.getRef().general.displayName;
 
-let lastPlaying: MusicKit.MediaItem;
+let lastPlaying: MusicKit.MediaItem | null;
 
 export function npSocket(): WebSocket | null {
 	const config = cfg.endpoint;
@@ -35,32 +35,62 @@ export function npInit(socket: WebSocket | null) {
 
 	mk.addEventListener('playbackStateDidChange', (event) => {
 		console.log('playbackStateDidChange', event);
+		console.log('Playback State', MusicKit.PlaybackStates[event.state], `(${event.state})`);
 
 		// @ts-ignore: types are broken here
 		const np: MusicKit.MediaItem = event.nowPlayingItem;
 
-		if (np !== lastPlaying) {
-			console.log('new media item', np);
+		if (socket.readyState !== WebSocket.OPEN) ws = npSocket();
 
-			const data = {
-				username,
-				now_playing: {
-					title: np.attributes.name,
-					artist: np.attributes.artistName,
-					album: np.attributes.albumName,
-					artwork: (np.attributes.artwork.url as string)
-						.replace('{w}', np.attributes.artwork.width)
-						.replace('{h}', np.attributes.artwork.height),
-				},
-			};
-
-			if (socket.readyState !== WebSocket.OPEN) ws = npSocket();
-			if (ws) {
-				ws.send(JSON.stringify(data));
-				console.log('sent', data);
+		if (ws) {
+			if (event.state == MusicKit.PlaybackStates.playing && np !== lastPlaying) {
+				console.log('new media item', np);
+	
+				const data = {
+					username,
+					now_playing: {
+						title: np.attributes.name,
+						artist: np.attributes.artistName,
+						album: np.attributes.albumName,
+						artwork: (np.attributes.artwork.url as string)
+							.replace('{w}', np.attributes.artwork.width)
+							.replace('{h}', np.attributes.artwork.height),
+					},
+				};
+				
+				send(ws, data);
+	
+				lastPlaying = np;
 			}
-
-			lastPlaying = np;
+	
+			if (event.state == MusicKit.PlaybackStates.paused) {
+				console.log('paused');
+				send(ws, emptyData());
+				lastPlaying = null;
+			}
 		}
 	});
+}
+
+function send(socket: WebSocket, data: any) {
+	if (socket.readyState !== WebSocket.OPEN) {
+		console.error('socket not open');
+		return;
+	}
+
+	socket.send(JSON.stringify(data));
+
+	console.log('sent', data);
+}
+
+function emptyData() {
+	return {
+		username,
+		now_playing: {
+			title: '',
+			artist: '',
+			album: '',
+			artwork: '',
+		},
+	};
 }
