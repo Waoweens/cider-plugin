@@ -11,7 +11,10 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@types/musickit-js": "^1.0.9",
     "lodash": "^4.17.21",
-    "vue": "^3.4.29"
+    "pinia": "^2.1.7",
+    "quasar": "^2.16.6",
+    "vue": "^3.4.29",
+    "vue-router": "^4.4.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.6",
