@@ -5,6 +5,7 @@ const mk = useMusicKit();
 const cfg = useConfig();
 
 let lastPlaying: MusicKit.MediaItem | null;
+let paused = false;
 
 export function npSocket(): WebSocket | null {
 	const config = cfg.endpoint;
@@ -40,20 +41,7 @@ export function npInit(socket: WebSocket | null) {
 			if (ws && event.item !== lastPlaying) {
 				console.log('new media item', attr.attributes);
 
-				const data = {
-					now_playing: {
-						title: attr.name,
-						artist: attr.artistName,
-						album: attr.albumName,
-						artwork: (attr.artwork.url as string)
-							.replace('{w}', attr.artwork.width)
-							.replace('{h}', attr.artwork.height),
-						duration: attr.durationInMillis,
-					},
-					position: 0,
-				};
-
-				send(ws, data);
+				sendSong(ws, attr);
 
 				lastPlaying = event.item;
 			}
@@ -78,10 +66,15 @@ export function npInit(socket: WebSocket | null) {
 
 		if (socket.readyState !== WebSocket.OPEN) ws = npSocket();
 		if (ws) {
+			if (paused && event.state == MusicKit.PlaybackStates.playing) {
+				sendSong(ws, attr, attr.currentPlaybackTime);
+				paused = false;
+			}
 			if (
 				event.state == MusicKit.PlaybackStates.paused ||
 				event.state == MusicKit.PlaybackStates.stopped
 			) {
+				paused = true;
 				console.log('paused');
 				send(ws, { clear: true });
 				lastPlaying = null;
@@ -90,11 +83,30 @@ export function npInit(socket: WebSocket | null) {
 			if (event.state == MusicKit.PlaybackStates.seeking) {
 				console.log('seeking to', attr.currentPlaybackTime);
 				send(ws, {
-					seek: attr.currentPlaybackTime * 1000,
+					position: attr.currentPlaybackTime * 1000,
+					position_modified: Date.now()
 				});
 			}
 		}
 	});
+}
+
+function sendSong(socket: WebSocket, attr: any, pos = 0) {
+	const data = {
+		now_playing: {
+			title: attr.name,
+			artist: attr.artistName,
+			album: attr.albumName,
+			artwork: (attr.artwork.url as string)
+				.replace('{w}', attr.artwork.width)
+				.replace('{h}', attr.artwork.height),
+			duration: attr.durationInMillis,
+		},
+		position: pos * 1000,
+		position_modified: Date.now()
+	};
+
+	send(socket, data);
 }
 
 function send(socket: WebSocket, data: any) {
