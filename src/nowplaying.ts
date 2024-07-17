@@ -33,40 +33,72 @@ export function npInit(socket: WebSocket | null) {
 	if (!socket) return;
 	let ws: WebSocket | null = socket;
 
-	mk.addEventListener('playbackStateDidChange', (event) => {
-		console.log('playbackStateDidChange', event);
-		console.log('Playback State', MusicKit.PlaybackStates[event.state], `(${event.state})`);
+	mk.addEventListener(
+		// @ts-ignore: Undocumented event
+		'nowPlayingItemDidChange',
+		(event: { item: MusicKit.MediaItem }) => {
+			console.log('nowPlayingItemDidChange', event);
 
-		// @ts-ignore: types are broken here
-		const np: MusicKit.MediaItem = event.nowPlayingItem;
+			const attr = event.item.attributes;
 
-		if (socket.readyState !== WebSocket.OPEN) ws = npSocket();
+			if (socket.readyState !== WebSocket.OPEN) ws = npSocket();
+			if (ws && event.item !== lastPlaying) {
+				console.log('new media item', attr.attributes);
 
-		if (ws) {
-			if (event.state == MusicKit.PlaybackStates.playing && np !== lastPlaying) {
-				console.log('new media item', np);
-	
 				const data = {
 					username,
 					now_playing: {
-						title: np.attributes.name,
-						artist: np.attributes.artistName,
-						album: np.attributes.albumName,
-						artwork: (np.attributes.artwork.url as string)
-							.replace('{w}', np.attributes.artwork.width)
-							.replace('{h}', np.attributes.artwork.height),
+						title: attr.name,
+						artist: attr.artistName,
+						album: attr.albumName,
+						artwork: (attr.artwork.url as string)
+							.replace('{w}', attr.artwork.width)
+							.replace('{h}', attr.artwork.height),
+						duration: attr.durationInMillis,
 					},
+					position: 0,
 				};
-				
+
 				send(ws, data);
-	
-				lastPlaying = np;
+
+				lastPlaying = event.item;
 			}
-	
-			if (event.state == MusicKit.PlaybackStates.paused) {
+		}
+	);
+
+	mk.addEventListener('playbackStateDidChange', (event) => {
+		console.log('playbackStateDidChange', event);
+
+		const e = event as {
+			oldState: MusicKit.PlaybackStates;
+			state: MusicKit.PlaybackStates;
+			nowPlayingItem: MusicKit.MediaItem;
+		};
+		const attr = e.nowPlayingItem.attributes;
+
+		console.log(
+			'Playback State',
+			MusicKit.PlaybackStates[e.state],
+			`(${e.state})`
+		);
+
+		if (socket.readyState !== WebSocket.OPEN) ws = npSocket();
+		if (ws) {
+			if (
+				event.state == MusicKit.PlaybackStates.paused ||
+				event.state == MusicKit.PlaybackStates.stopped
+			) {
 				console.log('paused');
-				send(ws, emptyData());
+				send(ws, { username, clear: true });
 				lastPlaying = null;
+			}
+
+			if (event.state == MusicKit.PlaybackStates.seeking) {
+				console.log('seeking to', attr.currentPlaybackTime);
+				send(ws, {
+					username,
+					seek: attr.currentPlaybackTime * 1000,
+				});
 			}
 		}
 	});
@@ -81,16 +113,4 @@ function send(socket: WebSocket, data: any) {
 	socket.send(JSON.stringify(data));
 
 	console.log('sent', data);
-}
-
-function emptyData() {
-	return {
-		username,
-		now_playing: {
-			title: '',
-			artist: '',
-			album: '',
-			artwork: '',
-		},
-	};
 }
