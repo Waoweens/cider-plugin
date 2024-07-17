@@ -1,13 +1,8 @@
 import { useMusicKit } from './api/MusicKit';
-import { useCider } from './api/Std';
 import { useConfig } from './config';
-
-// fix broken types
 
 const mk = useMusicKit();
 const cfg = useConfig();
-
-const username = useCider().config.getRef().general.displayName;
 
 let lastPlaying: MusicKit.MediaItem | null;
 
@@ -46,7 +41,6 @@ export function npInit(socket: WebSocket | null) {
 				console.log('new media item', attr.attributes);
 
 				const data = {
-					username,
 					now_playing: {
 						title: attr.name,
 						artist: attr.artistName,
@@ -89,14 +83,13 @@ export function npInit(socket: WebSocket | null) {
 				event.state == MusicKit.PlaybackStates.stopped
 			) {
 				console.log('paused');
-				send(ws, { username, clear: true });
+				send(ws, { clear: true });
 				lastPlaying = null;
 			}
 
 			if (event.state == MusicKit.PlaybackStates.seeking) {
 				console.log('seeking to', attr.currentPlaybackTime);
 				send(ws, {
-					username,
 					seek: attr.currentPlaybackTime * 1000,
 				});
 			}
